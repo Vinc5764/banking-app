@@ -30,158 +30,60 @@ export default function MemberList() {
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [membersPerPage] = useState(10);
-  const [editingMember, setEditingMember] = useState(null);
-
-  const members = [
-    {
-      id: 1,
-      name: "John Doe",
-      email: "john.doe@example.com",
-      accountNumber: "12345678",
-      balance: 5000.0,
-    },
-    {
-      id: 2,
-      name: "Jane Smith",
-      email: "jane.smith@example.com",
-      accountNumber: "87654321",
-      balance: 10000.0,
-    },
-    {
-      id: 3,
-      name: "Bob Johnson",
-      email: "bob.johnson@example.com",
-      accountNumber: "13579086",
-      balance: 2500.0,
-    },
-    {
-      id: 4,
-      name: "Alice Williams",
-      email: "alice.williams@example.com",
-      accountNumber: "24680135",
-      balance: 7500.0,
-    },
-    {
-      id: 5,
-      name: "Tom Brown",
-      email: "tom.brown@example.com",
-      accountNumber: "97531824",
-      balance: 1000.0,
-    },
-    {
-      id: 6,
-      name: "Sarah Davis",
-      email: "sarah.davis@example.com",
-      accountNumber: "86420197",
-      balance: 15000.0,
-    },
-    {
-      id: 7,
-      name: "Michael Wilson",
-      email: "michael.wilson@example.com",
-      accountNumber: "75312468",
-      balance: 3000.0,
-    },
-    {
-      id: 8,
-      name: "Emily Taylor",
-      email: "emily.taylor@example.com",
-      accountNumber: "64197532",
-      balance: 9000.0,
-    },
-    {
-      id: 9,
-      name: "David Anderson",
-      email: "david.anderson@example.com",
-      accountNumber: "53864197",
-      balance: 4500.0,
-    },
-    {
-      id: 10,
-      name: "Olivia Martinez",
-      email: "olivia.martinez@example.com",
-      accountNumber: "42197531",
-      balance: 12000.0,
-    },
-    {
-      id: 11,
-      name: "Daniel Hernandez",
-      email: "daniel.hernandez@example.com",
-      accountNumber: "31975864",
-      balance: 6000.0,
-    },
-    {
-      id: 12,
-      name: "Isabella Diaz",
-      email: "isabella.diaz@example.com",
-      accountNumber: "20864197",
-      balance: 8500.0,
-    },
-  ];
-
-  const handleEditCustomer = async (e: any) => {
-    e.preventDefault();
-    try {
-      const response = await axios.patch(
-        "https://bank-payment-server.onrender.com/users/update"
-        // {
-        //   userid: fullName,
-        //   email: email,
-        //   password: password,
-        //   bankType: bankType, // Include bankType in the request
-        // }
-      );
-      const token = response.data.token;
-      // localStorage.setItem("token", token);
-      console.log(response.data);
-      // router.push("/"); // Redirect after successful registration
-    } catch (error: any) {
-      console.error("Sign-up failed", error);
-    }
-  };
-
-  const handleDeleteCustomer = async (e: any) => {
-    e.preventDefault();
-    try {
-      const response = await axios.patch(
-        "https://bank-payment-server.onrender.com/users/delete"
-        // {
-        //   userid: fullName,
-        //   email: email,
-        //   password: password,
-        //   bankType: bankType, // Include bankType in the request
-        // }
-      );
-      const token = response.data.token;
-      // localStorage.setItem("token", token);
-      console.log(response.data);
-      // router.push("/"); // Redirect after successful registration
-    } catch (error: any) {
-      console.error("Sign-up failed", error);
-    }
-  };
+  const [members, setMembers] = useState([]);
+  const [editingMember, setEditingMember] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch(`http://localhost:3000/api/member-list`);
+        const response = await fetch(`http://localhost:3005/admin/members`);
         if (!response.ok) {
           throw new Error("Failed to fetch data");
         }
         const data = await response.json();
-        console.log(data);
-
-        //  setFetchedData(data);
+        setMembers(data);
       } catch (error) {
         console.error("Error fetching data:", error);
       }
     };
 
-    (async () => await fetchData())();
+    fetchData();
   }, []);
 
-  const filteredMembers = members.filter((member) =>
-    member.name.toLowerCase().includes(search.toLowerCase())
+  const handleEditCustomer = async (updatedMember) => {
+    try {
+      await axios.patch(`http://localhost:3001/update/${updatedMember.id}`, {
+        name: updatedMember.name,
+        email: updatedMember.email,
+        accountNumber: updatedMember.accountNumber,
+        balance: updatedMember.balance,
+      });
+
+      const updatedMembers = members.map((m) =>
+        m.id === updatedMember.id ? updatedMember : m
+      );
+      setMembers(updatedMembers);
+      setEditingMember(null);
+    } catch (error) {
+      console.error("Update failed", error);
+    }
+  };
+
+  const handleDeleteCustomer = async (memberId) => {
+    try {
+      await axios.delete(
+        `https://bank-payment-server.onrender.com/users/delete/${memberId}`
+      );
+
+      const updatedMembers = members.filter((m) => m.id !== memberId);
+      setMembers(updatedMembers);
+    } catch (error) {
+      console.error("Delete failed", error);
+    }
+  };
+
+  const filteredMembers = members?.filter((member) =>
+    member?.email?.toLowerCase().includes(search.toLowerCase())
   );
   const indexOfLastMember = currentPage * membersPerPage;
   const indexOfFirstMember = indexOfLastMember - membersPerPage;
@@ -190,19 +92,21 @@ export default function MemberList() {
     indexOfLastMember
   );
   const totalPages = Math.ceil(filteredMembers.length / membersPerPage);
+
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
   };
+
   const handleEdit = (member) => {
     setEditingMember(member);
   };
-  const handleSave = (updatedMember) => {
-    const updatedMembers = members.map((m) =>
-      m.id === updatedMember.id ? updatedMember : m
-    );
-    setMembers(updatedMembers);
-    setEditingMember(null);
+
+  const handleSave = () => {
+    if (editingMember) {
+      handleEditCustomer(editingMember);
+    }
   };
+
   return (
     <div className="container mx-auto py-8">
       <div className="mb-6 flex items-center justify-between">
@@ -233,8 +137,8 @@ export default function MemberList() {
           </TableHeader>
           <TableBody>
             {currentMembers.map((member) => (
-              <TableRow key={member.id}>
-                {editingMember?.id === member.id ? (
+              <TableRow key={member?.id}>
+                {editingMember?._id === member?._id ? (
                   <>
                     <TableCell>
                       <Input
@@ -285,11 +189,7 @@ export default function MemberList() {
                       />
                     </TableCell>
                     <TableCell>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleSave(editingMember)}
-                      >
+                      <Button variant="outline" size="sm" onClick={handleSave}>
                         Save
                       </Button>
                       <Button
@@ -303,10 +203,10 @@ export default function MemberList() {
                   </>
                 ) : (
                   <>
-                    <TableCell>{member.name}</TableCell>
-                    <TableCell>{member.email}</TableCell>
-                    <TableCell>{member.accountNumber}</TableCell>
-                    <TableCell>${member.balance.toFixed(2)}</TableCell>
+                    <TableCell>{member?.name}</TableCell>
+                    <TableCell>{member?.email}</TableCell>
+                    <TableCell>{member?.accountNumber}</TableCell>
+                    <TableCell>${member?.balance?.toFixed(2)}</TableCell>
                     <TableCell>
                       <Button
                         variant="outline"
@@ -314,6 +214,13 @@ export default function MemberList() {
                         onClick={() => handleEdit(member)}
                       >
                         Edit
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDeleteCustomer(member.id)}
+                      >
+                        Delete
                       </Button>
                     </TableCell>
                   </>

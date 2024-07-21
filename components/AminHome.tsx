@@ -3,6 +3,7 @@
  * @see https://v0.dev/t/jum4yag2Cnm
  * Documentation: https://v0.dev/docs#integrating-generated-code-into-your-nextjs-app
  */
+'use client'
 import { Sheet, SheetTrigger, SheetContent } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";

@@ -1,4 +1,4 @@
-'use client'
+"use client";
 
 /**
  * v0 by Vercel.
@@ -41,77 +41,87 @@ import {
   TableBody,
   TableCell,
 } from "@/components/ui/table";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
+import Papa from "papaparse";
 
 export default function CreateMembers() {
-   useEffect(() => {
-     const fetchData = async () => {
-       try {
-         const response = await fetch(`http://localhost:3000/api/getMembers`);
-         if (!response.ok) {
-           throw new Error("Failed to fetch data");
-         }
-         const data = await response.json();
-         console.log(data);
+  const [userid, setUserid] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [csvFile, setCsvFile] = useState(null);
 
-        //  setFetchedData(data);
-       } catch (error) {
-         console.error("Error fetching data:", error);
-       }
-     };
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch(`http://localhost:3000/api/getMembers`);
+        if (!response.ok) {
+          throw new Error("Failed to fetch data");
+        }
+        const data = await response.json();
+        console.log(data);
 
-     (async () => await fetchData())();
-   }, []);
-  
-   const handleCreateMember = async (e: any) => {
-     e.preventDefault();
-    
-     try {
-       const response = await axios.post(
-         "https://bank-payment-server.onrender.com/api/members/create",
-        //  {
-        //    userid: fullName,
-        //    email: email,
-        //    password: password,
-        //    bankType: bankType, // Include bankType in the request
-        //  }
-       );
-       const token = response.data.token;
-       // localStorage.setItem("token", token);
-       console.log(response.data);
-      //  router.push("/"); // Redirect after successful registration
-     } catch (error: any) {
-       console.error("Sign-up failed", error);
-     }
+        // setFetchedData(data);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+
+    (async () => await fetchData())();
+  }, []);
+
+  const handleCreateMember = async (e) => {
+    e.preventDefault();
+
+    try {
+      const response = await axios.post("http://localhost:3005/admin/members", {
+        userid: userid,
+        email: email,
+        password: password,
+      });
+      const token = response.data.token;
+      // localStorage.setItem("token", token);
+      console.log(response.data);
+      // router.push("/"); // Redirect after successful registration
+    } catch (error) {
+      console.error("Sign-up failed", error);
+    }
   };
-  
-   const handleCreateMembersInBulk = async (e: any) => {
-     e.preventDefault();
-   
-     try {
-       const response = await axios.post(
-         "https://bank-payment-server.onrender.com/members/create-bulk",
-        //  {
-        //    userid: fullName,
-        //    email: email,
-        //    password: password,
-        //    bankType: bankType, // Include bankType in the request
-        //  }
-       );
-       const token = response.data.token;
-       // localStorage.setItem("token", token);
-       console.log(response.data);
-      //  router.push("/"); // Redirect after successful registration
-     } catch (error: any) {
-       console.error("Sign-up failed", error);
-     }
-   };
 
+  const handleCreateMembersInBulk = async (e) => {
+    e.preventDefault();
+
+    if (!csvFile) {
+      console.error("No file selected");
+      return;
+    }
+
+    Papa.parse(csvFile, {
+      header: true,
+      complete: async (results) => {
+        // Filter out rows where userid is empty
+        const validData = results.data.filter((row) => row.userid);
+
+        console.log("Filtered Results:", validData);
+
+        try {
+          const response = await axios.post(
+            "http://localhost:3005/admin/bulkmembers",
+            validData
+          );
+          console.log("Backend Response:", response.data);
+        } catch (error) {
+          console.error("Bulk upload failed", error);
+        }
+      },
+      error: (error) => {
+        console.error("CSV parsing error", error);
+      },
+    });
+  };
 
   return (
     <div className="flex h-screen w-full flex-col">
-      
       <main className="flex-1 overflow-auto p-6">
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-2">
           <Card>
@@ -125,18 +135,31 @@ export default function CreateMembers() {
               <form>
                 <div className="grid gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="name">Name</Label>
-                    <Input id="name" placeholder="Enter member name" />
+                    <Label htmlFor="userid">User ID</Label>
+                    <Input
+                      id="userid"
+                      value={userid}
+                      onChange={(e) => setUserid(e.target.value)}
+                      placeholder="Enter user ID"
+                    />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="account">Account Number</Label>
-                    <Input id="account" placeholder="Enter account number" />
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="Enter email"
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="password">Password</Label>
                     <Input
                       id="password"
                       type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
                       placeholder="Enter password"
                     />
                   </div>
@@ -144,7 +167,7 @@ export default function CreateMembers() {
               </form>
             </CardContent>
             <CardFooter>
-              <Button type="submit" className="w-full">
+              <Button onClick={handleCreateMember} className="w-full">
                 Create Member
               </Button>
             </CardFooter>
@@ -157,102 +180,25 @@ export default function CreateMembers() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <form>
+              <form onSubmit={handleCreateMembersInBulk}>
                 <div className="grid gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="file">Upload CSV</Label>
-                    <Input id="file" type="file" />
+                    <Input
+                      id="file"
+                      type="file"
+                      onChange={(e) => setCsvFile(e.target.files[0])}
+                    />
                   </div>
                 </div>
               </form>
             </CardContent>
-            <CardFooter>
-              <Button type="submit" className="w-full">
-                Upload and Create Members
-              </Button>
-            </CardFooter>
+                <CardFooter>
+                  <Button type="submit" className="w-full">
+                    Upload and Create Members
+                  </Button>
+                </CardFooter>
           </Card>
-          {/* <Card>
-            <CardHeader>
-              <CardTitle>Member List</CardTitle>
-              <CardDescription>
-                View and manage all members in your organization.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Account</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  <TableRow>
-                    <TableCell>Jared Palmer</TableCell>
-                    <TableCell>123456789</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Button variant="outline" size="icon">
-                          <FilePenIcon className="h-4 w-4" />
-                          <span className="sr-only">Edit</span>
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className="text-red-500"
-                        >
-                          <TrashIcon className="h-4 w-4" />
-                          <span className="sr-only">Delete</span>
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell>Sophia Anderson</TableCell>
-                    <TableCell>987654321</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Button variant="outline" size="icon">
-                          <FilePenIcon className="h-4 w-4" />
-                          <span className="sr-only">Edit</span>
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className="text-red-500"
-                        >
-                          <TrashIcon className="h-4 w-4" />
-                          <span className="sr-only">Delete</span>
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell>Max Mustermann</TableCell>
-                    <TableCell>456789123</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Button variant="outline" size="icon">
-                          <FilePenIcon className="h-4 w-4" />
-                          <span className="sr-only">Edit</span>
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className="text-red-500"
-                        >
-                          <TrashIcon className="h-4 w-4" />
-                          <span className="sr-only">Delete</span>
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card> */}
         </div>
       </main>
     </div>

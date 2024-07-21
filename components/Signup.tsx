@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 
 export default function Signup() {
   const [file, setFile] = useState(null);
+  const [password, setPassword] = useState("");
   const handleFileChange = (event) => {
     setFile(event.target.files[0]);
   };

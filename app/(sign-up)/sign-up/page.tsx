@@ -54,10 +54,10 @@ const Page = () => {
           <div className="grid gap-4">
             <div className="grid grid-cols-1 gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="full-name">Full name</Label>
+                <Label htmlFor="full-name">UserID</Label>
                 <Input
                   id="full-name"
-                  placeholder="Max"
+                  placeholder="user123"
                   onChange={(e) => setFullName(e.target.value)}
                   required
                 />
@@ -92,9 +92,9 @@ const Page = () => {
                 required
               >
                 <option value="">Select...</option>
-                <option value="Savings">Savings</option>
-                <option value="Current">Current</option>
-                <option value="Fixed Deposit">Fixed Deposit</option>
+                <option value="Cal Bank">Cal Bank</option>
+                <option value="GCB">GCB</option>
+                {/* <option value="">Fixed Deposit</option> */}
                 {/* Add more options as needed */}
               </select>
             </div>
