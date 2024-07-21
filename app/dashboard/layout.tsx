@@ -1,3 +1,4 @@
+"use client";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
@@ -33,6 +34,19 @@ const navLinks = [
   { href: "#", label: "Settings" },
 ];
 
+const sidebarLinksCustomer = [
+  { href: "/dashboard", label: "Dashboardddd", icon: HomeIcon },
+  { href: "/dashboard/new-customer", label: "New Customer", icon: UserIcon },
+  { href: "/dashboard/members", label: "Member List", icon: UsersIcon },
+  {
+    href: "/dashboard/withdrawals",
+    label: "Pending Withdrawals",
+    icon: BriefcaseIcon,
+  },
+  { href: "/dashboard/deposits", label: "Deposits", icon: DollarSignIcon },
+  { href: "/dashboard/reports", label: "Reports", icon: FileTextIcon },
+];
+
 const sidebarLinks = [
   { href: "/dashboard", label: "Dashboard", icon: HomeIcon },
   { href: "/dashboard/new-customer", label: "New Customer", icon: UserIcon },
@@ -47,6 +61,10 @@ const sidebarLinks = [
 ];
 
 function RootLayout({ children }) {
+  const token = localStorage.getItem("usertype");
+
+  const sidebar = token === "customer" ? sidebarLinksCustomer : sidebarLinks;
+
   return (
     <div className="flex min-h-screen w-full flex-col bg-muted/40">
       <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b bg-background px-4 sm:px-6">
@@ -85,13 +103,13 @@ function RootLayout({ children }) {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-          </header>
-          
+      </header>
+
       <div className="flex flex-1">
         <aside className="hidden w-14 flex-col border-r bg-background sm:flex">
           <nav className="flex flex-col items-center gap-4 px-2 py-5">
             <TooltipProvider>
-              {sidebarLinks.map((link) => (
+              {sidebar.map((link) => (
                 <Tooltip key={link.label}>
                   <TooltipTrigger asChild>
                     <Link

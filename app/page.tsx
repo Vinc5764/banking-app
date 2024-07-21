@@ -24,7 +24,8 @@ const Page = () => {
   const [error, setError] = useState<string | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
-  const setToken = useTokenStore((state) => state.setToken);
+  const { token, setToken } = useTokenStore();
+
   const r = useRouter();
 
   const handleSubmit = async (e: any) => {
@@ -38,10 +39,13 @@ const Page = () => {
         userid: email,
         password: password,
       });
+      console.log(response);
+
       setIsLoading(false);
-      const token = response.data.data;
+      const token = response.data.token;
       localStorage.setItem("token", token);
-      setToken(token);
+      localStorage.setItem("usertype", response.data.user.usertype);
+
       if (response.data) {
         r.push("/dashboard/");
       }
